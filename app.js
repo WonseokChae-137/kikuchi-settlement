@@ -7,11 +7,17 @@
   const connectionError = document.getElementById('connection-error');
   const syncState = document.getElementById('sync-state');
   const syncText = document.getElementById('sync-text');
+  const pageTitle = document.getElementById('page-title');
+  const resetAllButton = document.getElementById('reset-all-btn');
+  const RESET_STORAGE = 'kikuchi-last-reset-at';
+  const DEFAULT_TITLE = '키쿠치 여름방학 정산';
 
   let db = null;
   let tripId = null;
   let realtimeChannel = null;
   let reloadTimer = null;
+  let titleSaveTimer = null;
+  let savedTitle = DEFAULT_TITLE;
   const updateJobs = new Map();
 
   function setSync(label, state = '') {
@@ -43,6 +49,73 @@
     const { data, error } = await db.auth.signInAnonymously();
     if (error) throw error;
     return data.session;
+  }
+
+  function clearHeaderPhotos() {
+    localStorage.removeItem(HEADER_PHOTOS.left);
+    localStorage.removeItem(HEADER_PHOTOS.right);
+    ['left', 'right'].forEach(side => {
+      const box = document.getElementById(`header-photo-${side}`);
+      const image = document.getElementById(`header-image-${side}`);
+      if (box) box.classList.remove('has-image');
+      if (image) { image.removeAttribute('src'); image.style.display = ''; }
+    });
+  }
+
+  function applyTripMeta(meta) {
+    const title = (meta.title || DEFAULT_TITLE).trim().slice(0, 100) || DEFAULT_TITLE;
+    savedTitle = title;
+    if (document.activeElement !== pageTitle) pageTitle.textContent = title;
+    if (meta.reset_at) {
+      const lastReset = localStorage.getItem(RESET_STORAGE) || '';
+      if (meta.reset_at !== lastReset) {
+        clearHeaderPhotos();
+        localStorage.setItem(RESET_STORAGE, meta.reset_at);
+      }
+    }
+  }
+
+  async function loadTripMeta() {
+    const { data, error } = await db.from('trips')
+      .select('title,reset_at')
+      .eq('id', tripId)
+      .single();
+    if (error) throw error;
+    applyTripMeta(data);
+  }
+
+  async function saveTitle() {
+    const title = pageTitle.textContent.replace(/\s+/g, ' ').trim().slice(0, 100);
+    if (!title) {
+      pageTitle.textContent = savedTitle;
+      setSync('제목을 입력해 주세요', 'error');
+      return;
+    }
+    setSync('제목 저장 중', 'saving');
+    const { error } = await db.from('trips').update({ title }).eq('id', tripId);
+    if (error) {
+      pageTitle.textContent = savedTitle;
+      setSync('제목 저장 실패', 'error');
+      console.error(error);
+      return;
+    }
+    savedTitle = title;
+    pageTitle.textContent = title;
+    setSync('저장됨');
+  }
+
+  function setupTitleEditing() {
+    pageTitle.addEventListener('keydown', event => {
+      if (event.key === 'Enter') { event.preventDefault(); pageTitle.blur(); }
+    });
+    pageTitle.addEventListener('input', () => {
+      clearTimeout(titleSaveTimer);
+      titleSaveTimer = setTimeout(saveTitle, 550);
+    });
+    pageTitle.addEventListener('blur', () => {
+      clearTimeout(titleSaveTimer);
+      saveTitle();
+    });
   }
 
 
@@ -102,6 +175,9 @@
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'advance_expenses', filter: `trip_id=eq.${tripId}`
       }, scheduleReload)
+      .on('postgres_changes', {
+        event: 'UPDATE', schema: 'public', table: 'trips', filter: `id=eq.${tripId}`
+      }, payload => applyTripMeta(payload.new))
       .subscribe(status => {
         if (status === 'SUBSCRIBED') setSync('실시간 연결됨');
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setSync('재연결 중', 'error');
@@ -249,6 +325,29 @@
     setSync('삭제됨');
   };
 
+  async function resetAllData() {
+    const confirmation = window.prompt('정산 내역·제목·사진을 모두 초기화합니다. 계속하려면 "전체 삭제"를 입력해 주세요.');
+    if (confirmation === null) return;
+    if (confirmation.trim() !== '전체 삭제') {
+      window.alert('확인 문구가 일치하지 않아 삭제하지 않았어요.');
+      return;
+    }
+    resetAllButton.disabled = true;
+    setSync('전체 삭제 중', 'saving');
+    try {
+      const { error } = await db.rpc('reset_trip_data');
+      if (error) throw error;
+      await Promise.all([loadTripMeta(), loadData()]);
+      setSync('전체 삭제 완료');
+    } catch (error) {
+      setSync('전체 삭제 실패', 'error');
+      console.error(error);
+      window.alert('전체 삭제에 실패했어요. 데이터는 임의로 추가 삭제하지 않았어요.');
+    } finally {
+      resetAllButton.disabled = false;
+    }
+  }
+
   async function init() {
     try {
       if (!window.supabase || typeof window.supabase.createClient !== 'function') {
@@ -266,7 +365,9 @@
       });
       await ensureAnonymousSession();
       tripId = config.tripId;
-      await loadData();
+      setupTitleEditing();
+      resetAllButton.addEventListener('click', resetAllData);
+      await Promise.all([loadTripMeta(), loadData()]);
       subscribeRealtime();
       hideConnection();
       setSync('실시간 연결됨');

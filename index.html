@@ -64,6 +64,11 @@ body{
   text-align:center;
   text-wrap:balance;
 }
+.page-title[contenteditable="true"]{cursor:text;}
+.page-title[contenteditable="true"]:focus{outline:4px solid rgba(118,185,71,.38);outline-offset:5px;}
+.page-title[contenteditable="true"]:empty::before{content:'제목을 입력해 주세요';color:var(--muted);}
+.title-edit-hint{position:absolute;z-index:4;left:50%;top:calc(50% + 31px);transform:translateX(-50%) rotate(-1.2deg);padding:2px 8px;border-radius:999px;background:rgba(250,255,244,.94);color:#56735f;font:11px 'Gowun Dodum','Malgun Gothic',sans-serif;white-space:nowrap;pointer-events:none;}
+.page-title:focus+.title-edit-hint{display:none;}
 .header-photo{
   position:relative;
   display:flex;
@@ -172,6 +177,11 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 .verdict{padding:22px;border:2px solid #bad99f;border-radius:20px 8px 20px 8px;background:linear-gradient(135deg,#eff9e4,#dff2cd);text-align:center;margin-bottom:12px;}
 .vbig{font-family:'Jua',sans-serif;font-size:30px;font-weight:400;color:var(--forest-dark);margin:8px 0;}
 .vsub{font-size:13px;color:var(--muted);}
+.reset-panel{max-width:1100px;margin:28px auto 0;padding:18px;border:1px solid #edc8c3;border-radius:18px 8px 18px 8px;background:#fff8f6;text-align:center;}
+.reset-all-btn{min-height:46px;padding:0 22px;border:1px solid #c95f55;border-radius:14px 7px 14px 7px;background:#fff;color:#a63f37;font:18px 'Jua',sans-serif;cursor:pointer;}
+.reset-all-btn:hover{background:#fce9e5;}
+.reset-all-btn:disabled{cursor:wait;opacity:.58;}
+.reset-note{margin-top:8px;color:#8d625f;font-size:12px;}
 @media(max-width:700px){
   body{padding:10px 8px 42px;}
   .page-header{gap:8px;margin-bottom:18px;}
@@ -247,7 +257,8 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
     <span class="photo-placeholder"><i class="ti ti-photo-plus"></i><span>사진 선택</span></span>
     <input class="photo-input" id="header-input-left" type="file" accept="image/*"/>
   </label>
-  <h1 class="page-title">키쿠치 여름방학 정산</h1>
+  <h1 class="page-title" id="page-title" contenteditable="true" role="textbox" aria-label="정산표 제목" aria-multiline="false" spellcheck="false" title="눌러서 제목 수정">키쿠치 여름방학 정산</h1>
+  <span class="title-edit-hint" aria-hidden="true">제목을 눌러 수정</span>
   <label class="header-photo" id="header-photo-right" for="header-input-right" title="오른쪽 사진 선택">
     <img id="header-image-right" alt="오른쪽 헤더 사진"/>
     <span class="photo-placeholder"><i class="ti ti-photo-plus"></i><span>사진 선택</span></span>
@@ -260,6 +271,10 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 </div>
 <div id="cats"></div>
 <div id="proxy-payments"></div>
+<section class="reset-panel" aria-label="전체 초기화">
+  <button class="reset-all-btn" id="reset-all-btn" type="button">전체 삭제</button>
+  <p class="reset-note">정산 내역·제목·사진을 모두 초기화합니다. 실행 전 확인 문구를 입력해야 합니다.</p>
+</section>
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>

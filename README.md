@@ -4,7 +4,8 @@
 
 - 프런트엔드: GitHub Pages
 - 데이터·인증·실시간 동기화: Supabase
-- 공개 저장소에는 실제 정산 데이터와 비밀 접근키를 저장하지 않습니다.
+- 공개 저장소에는 실제 정산 데이터를 저장하지 않습니다.
+- 이 페이지는 URL을 아는 사람이라면 누구나 정산 데이터를 읽고 수정할 수 있습니다.
 - 헤더 사진은 각 기기의 브라우저에만 저장됩니다.
 
-`config.js`에는 웹 클라이언트 공개용 Supabase URL과 publishable key만 들어갑니다. 데이터 접근은 Supabase RLS와 비밀 초대키로 제한합니다.
+`config.js`에는 웹 클라이언트 공개용 Supabase URL, publishable key, 정산표 ID가 들어갑니다. Supabase RLS는 이 정산표에 한해 익명 인증 사용자의 읽기·수정을 허용합니다.

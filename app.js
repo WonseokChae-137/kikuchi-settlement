@@ -1,13 +1,10 @@
 (() => {
   'use strict';
 
-  const TRIP_ID_STORAGE = 'kikuchi-live-trip-id';
   const config = window.KIKUCHI_CONFIG || {};
-  const accessScreen = document.getElementById('access-screen');
-  const accessMessage = document.getElementById('access-message');
-  const accessForm = document.getElementById('access-form');
-  const accessInput = document.getElementById('access-key-input');
-  const accessError = document.getElementById('access-error');
+  const connectionScreen = document.getElementById('connection-screen');
+  const connectionMessage = document.getElementById('connection-message');
+  const connectionError = document.getElementById('connection-error');
   const syncState = document.getElementById('sync-state');
   const syncText = document.getElementById('sync-text');
 
@@ -24,29 +21,19 @@
 
   function friendlyError(error, fallback = '연결 중 문제가 생겼어요.') {
     console.error(error);
-    if (error && /invalid access key/i.test(error.message || '')) return '비밀 접근키가 올바르지 않아요.';
     if (error && /anonymous sign-ins/i.test(error.message || '')) return 'Supabase에서 익명 로그인을 먼저 허용해야 해요.';
     return fallback;
   }
 
-  function showAccess(message, error = '') {
-    accessMessage.textContent = message;
-    accessError.textContent = error;
-    accessForm.hidden = false;
-    accessScreen.classList.remove('is-hidden');
-    setTimeout(() => accessInput.focus(), 0);
+  function showConnectionError(message, error = '') {
+    connectionMessage.textContent = message;
+    connectionError.textContent = error;
+    connectionScreen.classList.remove('is-hidden');
   }
 
-  function hideAccess() {
-    accessScreen.classList.add('is-hidden');
-    accessError.textContent = '';
-  }
-
-  function consumeFragmentKey() {
-    const params = new URLSearchParams(location.hash.replace(/^#/, ''));
-    const key = params.get('key') || '';
-    if (location.hash) history.replaceState(null, '', `${location.pathname}${location.search}`);
-    return key.trim();
+  function hideConnection() {
+    connectionScreen.classList.add('is-hidden');
+    connectionError.textContent = '';
   }
 
   async function ensureAnonymousSession() {
@@ -58,18 +45,6 @@
     return data.session;
   }
 
-  async function joinWithKey(key) {
-    accessError.textContent = '';
-    accessMessage.textContent = '비밀 링크를 확인하고 있어요.';
-    const { data, error } = await db.rpc('join_trip', { p_access_key: key });
-    if (error) throw error;
-    tripId = data;
-    localStorage.setItem(TRIP_ID_STORAGE, tripId);
-    await loadData();
-    subscribeRealtime();
-    hideAccess();
-    setSync('실시간 연결됨');
-  }
 
   function mapShared(row) {
     return { id: row.id, name: row.item_name, amount: Number(row.amount), payer: row.payer, sort_order: row.sort_order };
@@ -274,29 +249,14 @@
     setSync('삭제됨');
   };
 
-  accessForm.addEventListener('submit', async event => {
-    event.preventDefault();
-    const key = accessInput.value.trim();
-    if (!key) {
-      accessError.textContent = '비밀 접근키를 입력해 주세요.';
-      return;
-    }
-    accessInput.value = '';
-    try {
-      await joinWithKey(key);
-    } catch (error) {
-      showAccess('정산표를 열려면 비밀 접근키가 필요해요.', friendlyError(error));
-    }
-  });
-
   async function init() {
     try {
       if (!window.supabase || typeof window.supabase.createClient !== 'function') {
         throw new Error('Supabase library failed to load');
       }
-      if (!config.supabaseUrl || !config.supabasePublishableKey || config.supabaseUrl.startsWith('__') || config.supabasePublishableKey.startsWith('__')) {
-        accessMessage.textContent = 'Supabase 공개 연결 정보를 설정하는 중이에요.';
-        accessError.textContent = '배포 설정이 아직 완료되지 않았어요.';
+      if (!config.supabaseUrl || !config.supabasePublishableKey || !/^[0-9a-f-]{36}$/.test(config.tripId || '') || config.supabaseUrl.startsWith('__') || config.supabasePublishableKey.startsWith('__')) {
+        connectionMessage.textContent = 'Supabase 공개 연결 정보를 설정하는 중이에요.';
+        connectionError.textContent = '배포 설정이 아직 완료되지 않았어요.';
         setSync('설정 필요', 'error');
         return;
       }
@@ -305,31 +265,13 @@
         auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
       });
       await ensureAnonymousSession();
-
-      const fragmentKey = consumeFragmentKey();
-      if (fragmentKey) {
-        await joinWithKey(fragmentKey);
-        return;
-      }
-
-      const savedTripId = localStorage.getItem(TRIP_ID_STORAGE);
-      if (savedTripId) {
-        tripId = savedTripId;
-        try {
-          await loadData();
-          subscribeRealtime();
-          hideAccess();
-          setSync('실시간 연결됨');
-          return;
-        } catch (error) {
-          localStorage.removeItem(TRIP_ID_STORAGE);
-          tripId = null;
-        }
-      }
-      showAccess('정산표를 열려면 비밀 초대 링크 또는 접근키가 필요해요.');
-      setSync('접근키 필요', 'error');
+      tripId = config.tripId;
+      await loadData();
+      subscribeRealtime();
+      hideConnection();
+      setSync('실시간 연결됨');
     } catch (error) {
-      showAccess('공동 정산표에 연결하지 못했어요.', friendlyError(error));
+      showConnectionError('공동 정산표에 연결하지 못했어요.', friendlyError(error));
       setSync('연결 실패', 'error');
     }
   }

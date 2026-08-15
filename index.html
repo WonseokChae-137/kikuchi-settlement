@@ -90,15 +90,12 @@ body{
 .photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;font-family:'Jua',sans-serif;font-size:18px;line-height:1.2;}
 .photo-placeholder i{font-size:52px;}
 .photo-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
-.access-screen{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:22px;background:rgba(23,63,41,.72);backdrop-filter:blur(8px);}
-.access-screen.is-hidden{display:none;}
-.access-card{width:min(440px,100%);padding:30px;border:1px solid #d7e9ca;border-radius:28px 12px 28px 12px;background:var(--cream);box-shadow:0 24px 70px rgba(10,44,25,.28);text-align:center;}
-.access-card h2{font-family:'Jua',sans-serif;font-size:28px;font-weight:400;color:var(--forest-dark);}
-.access-card p{margin:10px 0 18px;color:var(--muted);font-size:14px;line-height:1.55;}
-.access-form{display:flex;gap:8px;}
-.access-form input{min-width:0;}
-.access-form button{flex:0 0 auto;padding:0 17px;border:0;border-radius:13px;background:var(--forest);color:#fff;font-family:inherit;font-weight:700;cursor:pointer;}
-.access-error{min-height:21px;margin-top:12px;color:var(--danger);font-size:13px;}
+.connection-screen{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:22px;background:rgba(23,63,41,.72);backdrop-filter:blur(8px);}
+.connection-screen.is-hidden{display:none;}
+.connection-card{width:min(440px,100%);padding:30px;border:1px solid #d7e9ca;border-radius:28px 12px 28px 12px;background:var(--cream);box-shadow:0 24px 70px rgba(10,44,25,.28);text-align:center;}
+.connection-card h2{font-family:'Jua',sans-serif;font-size:28px;font-weight:400;color:var(--forest-dark);}
+.connection-card p{margin:10px 0;color:var(--muted);font-size:14px;line-height:1.55;}
+.connection-error{min-height:21px;margin-top:12px;color:var(--danger);font-size:13px;}
 .sync-state{position:fixed;z-index:20;right:14px;bottom:14px;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #cde1c0;border-radius:999px;background:rgba(251,255,247,.94);box-shadow:0 8px 24px rgba(31,85,51,.13);color:var(--forest);font-size:12px;}
 .sync-dot{width:8px;height:8px;border-radius:50%;background:#7ab34f;}
 .sync-state.saving .sync-dot{background:#e2a53b;}
@@ -236,15 +233,11 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 </style>
 </head>
 <body>
-<div class="access-screen" id="access-screen">
-  <div class="access-card">
+<div class="connection-screen" id="connection-screen">
+  <div class="connection-card">
     <h2>정산표 연결 중</h2>
-    <p id="access-message">안전한 공동 정산표에 연결하고 있어요.</p>
-    <form class="access-form" id="access-form" hidden>
-      <input id="access-key-input" type="password" autocomplete="off" placeholder="비밀 접근키" aria-label="비밀 접근키"/>
-      <button type="submit">열기</button>
-    </form>
-    <div class="access-error" id="access-error"></div>
+    <p id="connection-message">공동 정산표를 자동으로 열고 있어요.</p>
+    <div class="connection-error" id="connection-error"></div>
   </div>
 </div>
 <div class="sync-state" id="sync-state"><span class="sync-dot"></span><span id="sync-text">연결 중</span></div>

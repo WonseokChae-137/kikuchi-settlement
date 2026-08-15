@@ -121,7 +121,7 @@ body{
 .cat-note{font-size:12px;color:var(--muted);margin-left:2px;}
 .cat-total{margin-left:auto;font-family:'Jua',sans-serif;font-size:18px;font-weight:400;color:var(--forest);}
 .cat-body{padding:15px 22px 20px;}
-.ihead,.irow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:10px;align-items:center;}
+.ihead,.irow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 88px;gap:10px;align-items:center;}
 .ihead{padding:0 4px 7px;border-bottom:1px solid #e2edda;margin-bottom:3px;}
 .ihead span{font-size:12px;color:var(--muted);}
 .irow{padding:7px 0;border-bottom:1px solid #edf3e8;}
@@ -148,6 +148,11 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 .edit-payer{padding-left:10px;padding-right:6px;}
 .delbtn{width:40px;height:40px;border:0;border-radius:13px;background:#f1f7ec;color:#7d987d;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s ease;}
 .delbtn:hover{background:#fdebe7;color:var(--danger);transform:rotate(4deg);}
+.row-actions{display:flex;align-items:center;justify-content:flex-end;gap:6px;}
+.attachment-action{position:relative;width:40px;height:40px;border:0;border-radius:13px;background:#e8f4df;color:var(--forest);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s ease;}
+.attachment-action:hover{background:#d7ecc8;transform:translateY(-1px);}
+.attachment-count{position:absolute;right:-4px;top:-5px;display:grid;min-width:18px;height:18px;padding:0 4px;place-items:center;border:2px solid #fff;border-radius:999px;background:var(--forest);color:#fff;font:10px Arial,sans-serif;}
+.attachment-count:empty{display:none;}
 .add-item-btn{width:100%;min-height:48px;margin-top:14px;border:1px dashed #8ebd70;border-radius:15px 8px 15px 8px;background:#eff9e4;color:var(--forest);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font:18px 'Jua',sans-serif;transition:.17s ease;}
 .add-item-btn:hover{background:var(--lime);border-color:var(--forest);transform:translateY(-1px);}
 .add-item-btn:focus-visible{outline:4px solid rgba(118,185,71,.25);outline-offset:2px;}
@@ -164,7 +169,7 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 .cat-row:last-child{border-bottom:none;}
 .proxy-block{border-color:#99c69a;background:#f8fff4;}
 .proxy-block .cat-header{background:linear-gradient(90deg,#dff3d3,#f8fff4);}
-.proxy-head,.proxy-row{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(120px,.9fr) minmax(120px,.9fr) 40px;gap:10px;align-items:center;}
+.proxy-head,.proxy-row{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(120px,.9fr) minmax(120px,.9fr) 88px;gap:10px;align-items:center;}
 .proxy-head{padding:0 4px 7px;border-bottom:1px solid #dcebd2;margin-bottom:3px;}
 .proxy-head span{font-size:12px;color:var(--muted);}
 .proxy-row{padding:7px 0;border-bottom:1px solid #e7f0df;}
@@ -182,6 +187,25 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
 .reset-all-btn:hover{background:#fce9e5;}
 .reset-all-btn:disabled{cursor:wait;opacity:.58;}
 .reset-note{margin-top:8px;color:#8d625f;font-size:12px;}
+.attachment-modal{width:min(620px,calc(100% - 24px));max-height:min(82vh,760px);padding:0;overflow:hidden;border:0;border-radius:26px 12px 26px 12px;background:var(--cream);box-shadow:0 28px 90px rgba(10,44,25,.32);color:var(--ink);}
+.attachment-modal::backdrop{background:rgba(17,48,31,.66);backdrop-filter:blur(5px);}
+.attachment-modal-head{display:flex;align-items:center;gap:10px;padding:18px 20px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#e6f5d8,#f8fff3);}
+.attachment-modal-title{min-width:0;flex:1;font:22px 'Jua',sans-serif;color:var(--forest-dark);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.attachment-close{width:40px;height:40px;border:0;border-radius:12px;background:#fff;color:var(--muted);font-size:19px;cursor:pointer;}
+.attachment-modal-body{max-height:calc(82vh - 78px);padding:18px 20px 22px;overflow:auto;}
+.attachment-upload-label{display:flex;min-height:48px;align-items:center;justify-content:center;gap:8px;border:1px dashed #7fad61;border-radius:15px 8px 15px 8px;background:#eff9e4;color:var(--forest);cursor:pointer;font:18px 'Jua',sans-serif;}
+.attachment-upload-label.is-disabled{pointer-events:none;opacity:.55;}
+#attachment-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.attachment-help{margin:9px 2px 16px;color:var(--muted);font-size:11px;line-height:1.5;}
+.attachment-list{display:grid;gap:10px;}
+.attachment-card{display:grid;grid-template-columns:62px minmax(0,1fr) 40px;gap:11px;align-items:center;padding:10px;border:1px solid #d9e8cf;border-radius:16px 8px 16px 8px;background:#fff;}
+.attachment-preview{display:grid;width:62px;height:62px;place-items:center;overflow:hidden;border-radius:12px 6px 12px 6px;background:#edf5e7;color:var(--forest);font-size:25px;text-decoration:none;}
+.attachment-preview img{width:100%;height:100%;object-fit:cover;}
+.attachment-info{min-width:0;}
+.attachment-name{display:block;color:var(--ink);font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-decoration:none;}
+.attachment-meta{margin-top:4px;color:var(--muted);font-size:11px;}
+.attachment-delete{width:40px;height:40px;border:0;border-radius:12px;background:#f9ece8;color:var(--danger);cursor:pointer;font-size:17px;}
+.attachment-empty{padding:24px 8px;text-align:center;color:var(--muted);font-size:13px;}
 @media(max-width:700px){
   body{padding:10px 8px 42px;}
   .page-header{gap:8px;margin-bottom:18px;}
@@ -201,8 +225,8 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
   .irow{
     grid-template-columns:minmax(0,1fr) 112px 40px;
     grid-template-areas:
-      "name name del"
-      "amount payer del";
+      "name name actions"
+      "amount payer actions";
     gap:6px;
     min-width:0;
     padding:10px 0;
@@ -210,14 +234,15 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
   .edit-name{grid-area:name;}
   .edit-amount{grid-area:amount;}
   .edit-payer{grid-area:payer;}
-  .delbtn{grid-area:del;width:40px;height:100%;min-height:44px;}
+  .irow>.row-actions{grid-area:actions;align-self:stretch;flex-direction:column;justify-content:center;gap:5px;}
+  .row-actions .delbtn,.row-actions .attachment-action{width:40px;height:40px;min-height:40px;}
   .proxy-head{display:none;}
   .proxy-row{
     display:grid;
     grid-template-columns:minmax(0,1fr) 96px 96px 40px;
     grid-template-areas:
-      "proxyname proxyname proxyname proxydel"
-      "proxyamount proxypaid proxyowner proxydel";
+      "proxyname proxyname proxyname proxyactions"
+      "proxyamount proxypaid proxyowner proxyactions";
     gap:6px;
     min-width:0;
     padding:10px 0;
@@ -226,7 +251,7 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
   .proxy-row .edit-amount{grid-area:proxyamount;}
   .proxy-paid{grid-area:proxypaid;}
   .proxy-owner{grid-area:proxyowner;}
-  .proxy-row .delbtn{grid-area:proxydel;}
+  .proxy-row>.row-actions{grid-area:proxyactions;align-self:stretch;flex-direction:column;justify-content:center;gap:5px;}
   input,select{height:42px;padding:0 8px;font-size:13px;}
   .add-item-btn{min-width:0;}
   .result-block{border-radius:20px 8px 20px 8px;}
@@ -275,6 +300,18 @@ input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff
   <button class="reset-all-btn" id="reset-all-btn" type="button">전체 삭제</button>
   <p class="reset-note">정산 내역·제목·사진을 모두 초기화합니다. 실행 전 확인 문구를 입력해야 합니다.</p>
 </section>
+<dialog class="attachment-modal" id="attachment-modal" aria-labelledby="attachment-modal-title">
+  <div class="attachment-modal-head">
+    <div class="attachment-modal-title" id="attachment-modal-title">첨부파일</div>
+    <button class="attachment-close" id="attachment-close" type="button" aria-label="첨부파일 창 닫기"><i class="ti ti-x"></i></button>
+  </div>
+  <div class="attachment-modal-body">
+    <label class="attachment-upload-label" id="attachment-upload-label" for="attachment-input"><i class="ti ti-paperclip"></i> 첨부파일 추가</label>
+    <input id="attachment-input" type="file" accept="image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf" multiple/>
+    <p class="attachment-help">이미지·PDF만 가능 · 파일당 최대 10MB · 항목당 최대 5개 · 현재 공개 링크 사용자는 파일을 볼 수 있어요.</p>
+    <div class="attachment-list" id="attachment-list"></div>
+  </div>
+</dialog>
 
 <script src="config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -375,6 +412,12 @@ function personOptions(selected){
 }
 
 function otherPerson(person){return person==='카피바라'?'수달':'카피바라';}
+let attachmentCounts={};
+function openAttachmentModal(){}
+function attachmentAction(type,id,name){
+  const count=attachmentCounts[`${type}:${id}`]||0;
+  return `<div class="row-actions"><button class="attachment-action" type="button" aria-label="${escapeAttr(name||'빈 항목')} 첨부파일" onclick="openAttachmentModal('${type}','${id}')"><i class="ti ti-paperclip"></i><span class="attachment-count">${count||''}</span></button>`;
+}
 
 function updateCatTotal(cat){
   const total=items[cat].reduce((sum,item)=>sum+(Number(item.amount)||0),0);
@@ -458,7 +501,7 @@ function renderAdvance(){
     <input class="edit-amount" type="number" value="${Number(item.amount)||''}" aria-label="대신 결제 금액" placeholder="금액" min="0" step="1" inputmode="numeric" oninput="updateAdvance('${item.id}','amount',this.value)"/>
     <select class="proxy-paid" aria-label="대신 결제한 사람" onchange="updateAdvance('${item.id}','payer',this.value)">${personOptions(item.payer)}</select>
     <select class="proxy-owner" aria-label="실제 부담자" onchange="updateAdvance('${item.id}','owner',this.value)">${personOptions(item.owner)}</select>
-    <button class="delbtn" type="button" aria-label="${escapeAttr(item.name||'빈 대신 결제 항목')} 삭제" onclick="delAdvance('${item.id}')"><i class="ti ti-x"></i></button>
+    ${attachmentAction('advance',item.id,item.name)}<button class="delbtn" type="button" aria-label="${escapeAttr(item.name||'빈 대신 결제 항목')} 삭제" onclick="delAdvance('${item.id}')"><i class="ti ti-x"></i></button></div>
   </div>`).join('');
   document.getElementById('proxy-payments').innerHTML=`<div class="cat-block proxy-block">
     <div class="cat-header">
@@ -482,7 +525,7 @@ function renderCats(){
       <input class="edit-name" data-item-id="${it.id}" type="text" value="${escapeAttr(it.name)}" aria-label="${c.label} 항목명" placeholder="항목명" oninput="updateItem('${c.key}','${it.id}','name',this.value)"/>
       <input class="edit-amount" type="number" value="${Number(it.amount)||''}" aria-label="${c.label} 금액" placeholder="금액" min="0" step="1" inputmode="numeric" oninput="updateItem('${c.key}','${it.id}','amount',this.value)"/>
       <select class="edit-payer" aria-label="${c.label} 결제자" onchange="updateItem('${c.key}','${it.id}','payer',this.value)">${payerOptions(it.payer)}</select>
-      <button class="delbtn" type="button" aria-label="${escapeAttr(it.name||'빈 항목')} 삭제" onclick="delItem('${c.key}','${it.id}')"><i class="ti ti-x"></i></button>
+      ${attachmentAction('shared',it.id,it.name)}<button class="delbtn" type="button" aria-label="${escapeAttr(it.name||'빈 항목')} 삭제" onclick="delItem('${c.key}','${it.id}')"><i class="ti ti-x"></i></button></div>
     </div>`).join('');
     return`<div class="cat-block">
       <div class="cat-header">

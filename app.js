@@ -9,8 +9,18 @@
   const syncText = document.getElementById('sync-text');
   const pageTitle = document.getElementById('page-title');
   const resetAllButton = document.getElementById('reset-all-btn');
+  const attachmentModal = document.getElementById('attachment-modal');
+  const attachmentModalTitle = document.getElementById('attachment-modal-title');
+  const attachmentInput = document.getElementById('attachment-input');
+  const attachmentList = document.getElementById('attachment-list');
+  const attachmentUploadLabel = document.getElementById('attachment-upload-label');
+  const attachmentClose = document.getElementById('attachment-close');
   const RESET_STORAGE = 'kikuchi-last-reset-at';
   const DEFAULT_TITLE = '키쿠치 여름방학 정산';
+  const ATTACHMENT_BUCKET = 'expense-attachments';
+  const MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024;
+  const MAX_ATTACHMENTS_PER_ITEM = 5;
+  const ALLOWED_ATTACHMENT_TYPES = new Set(['image/jpeg','image/png','image/webp','image/heic','image/heif','application/pdf']);
 
   let db = null;
   let tripId = null;
@@ -18,6 +28,10 @@
   let reloadTimer = null;
   let titleSaveTimer = null;
   let savedTitle = DEFAULT_TITLE;
+  let attachmentRows = [];
+  let activeAttachmentTarget = null;
+  let attachmentReloadTimer = null;
+  let attachmentRenderToken = 0;
   const updateJobs = new Map();
 
   function setSync(label, state = '') {
@@ -118,6 +132,202 @@
     });
   }
 
+  function attachmentKey(type, expenseId) {
+    return `${type}:${expenseId}`;
+  }
+
+  function rebuildAttachmentCounts() {
+    attachmentCounts = {};
+    attachmentRows.forEach(row => {
+      const key = attachmentKey(row.expense_type, row.expense_id);
+      attachmentCounts[key] = (attachmentCounts[key] || 0) + 1;
+    });
+  }
+
+  function rowsForAttachmentTarget(type, expenseId) {
+    return attachmentRows.filter(row => row.expense_type === type && String(row.expense_id) === String(expenseId));
+  }
+
+  async function loadAttachmentMetadata() {
+    const { data, error } = await db.from('expense_attachments')
+      .select('id,expense_type,expense_id,object_path,original_name,mime_type,size_bytes,created_at')
+      .eq('trip_id', tripId)
+      .order('created_at');
+    if (error) throw error;
+    attachmentRows = data || [];
+    rebuildAttachmentCounts();
+    renderAll();
+    if (attachmentModal.open && activeAttachmentTarget) await renderAttachmentModal();
+  }
+
+  function scheduleAttachmentReload() {
+    clearTimeout(attachmentReloadTimer);
+    attachmentReloadTimer = setTimeout(async () => {
+      try {
+        await loadAttachmentMetadata();
+        setSync('실시간 연결됨');
+      } catch (error) {
+        setSync('첨부 동기화 오류', 'error');
+        console.error(error);
+      }
+    }, 220);
+  }
+
+  function findExpenseName(type, expenseId) {
+    if (type === 'advance') return items.advance.find(item => String(item.id) === String(expenseId))?.name || '대신 결제 항목';
+    return CATS.flatMap(cat => items[cat.key]).find(item => String(item.id) === String(expenseId))?.name || '공동경비 항목';
+  }
+
+  function formatAttachmentSize(bytes) {
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)}KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
+  }
+
+  async function renderAttachmentModal() {
+    if (!activeAttachmentTarget) return;
+    const token = ++attachmentRenderToken;
+    const rows = rowsForAttachmentTarget(activeAttachmentTarget.type, activeAttachmentTarget.id);
+    attachmentModalTitle.textContent = `${findExpenseName(activeAttachmentTarget.type, activeAttachmentTarget.id)} · 첨부파일`;
+    attachmentUploadLabel.classList.toggle('is-disabled', rows.length >= MAX_ATTACHMENTS_PER_ITEM);
+    attachmentUploadLabel.innerHTML = rows.length >= MAX_ATTACHMENTS_PER_ITEM
+      ? '<i class="ti ti-lock"></i> 첨부 한도 5개'
+      : '<i class="ti ti-paperclip"></i> 첨부파일 추가';
+    if (!rows.length) {
+      attachmentList.innerHTML = '<div class="attachment-empty">첨부된 파일이 아직 없어요</div>';
+      return;
+    }
+    attachmentList.innerHTML = '<div class="attachment-empty">첨부파일을 불러오는 중이에요</div>';
+    const cards = await Promise.all(rows.map(async row => {
+      const { data, error } = await db.storage.from(ATTACHMENT_BUCKET).createSignedUrl(row.object_path, 600);
+      const signedUrl = error ? '' : data.signedUrl;
+      const isImage = row.mime_type.startsWith('image/');
+      const preview = signedUrl && isImage
+        ? `<img src="${escapeAttr(signedUrl)}" alt="${escapeAttr(row.original_name)} 미리보기"/>`
+        : `<i class="ti ${row.mime_type === 'application/pdf' ? 'ti-file-type-pdf' : 'ti-file'}"></i>`;
+      const date = new Date(row.created_at).toLocaleDateString('ko-KR');
+      return `<div class="attachment-card" data-attachment-id="${row.id}">
+        <a class="attachment-preview" href="${escapeAttr(signedUrl || '#')}" target="_blank" rel="noopener" aria-label="${escapeAttr(row.original_name)} 열기">${preview}</a>
+        <div class="attachment-info"><a class="attachment-name" href="${escapeAttr(signedUrl || '#')}" target="_blank" rel="noopener">${escapeAttr(row.original_name)}</a><div class="attachment-meta">${formatAttachmentSize(Number(row.size_bytes))} · ${date}</div></div>
+        <button class="attachment-delete" type="button" aria-label="${escapeAttr(row.original_name)} 삭제" onclick="deleteAttachment('${row.id}')"><i class="ti ti-trash"></i></button>
+      </div>`;
+    }));
+    if (token === attachmentRenderToken) attachmentList.innerHTML = cards.join('');
+  }
+
+  window.openAttachmentModal = async function (type, expenseId) {
+    activeAttachmentTarget = { type, id: expenseId };
+    if (!attachmentModal.open) attachmentModal.showModal();
+    await renderAttachmentModal();
+  };
+
+  function extensionForAttachment(file) {
+    const byType = { 'image/jpeg':'jpg', 'image/png':'png', 'image/webp':'webp', 'image/heic':'heic', 'image/heif':'heif', 'application/pdf':'pdf' };
+    return byType[file.type] || 'bin';
+  }
+
+  async function prepareAttachmentFile(file) {
+    if (!['image/jpeg','image/png','image/webp'].includes(file.type) || file.size < 700 * 1024) return file;
+    try {
+      const bitmap = await createImageBitmap(file);
+      const scale = Math.min(1, 1800 / Math.max(bitmap.width, bitmap.height));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+      canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+      canvas.getContext('2d').drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+      bitmap.close();
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', .84));
+      if (blob && blob.size < file.size) return new File([blob], `${file.name.replace(/\.[^.]+$/, '')}.webp`, { type: 'image/webp' });
+    } catch (error) {
+      console.warn('이미지 압축을 건너뜁니다.', error);
+    }
+    return file;
+  }
+
+  async function uploadAttachment(fileList) {
+    if (!activeAttachmentTarget) return;
+    const existing = rowsForAttachmentTarget(activeAttachmentTarget.type, activeAttachmentTarget.id).length;
+    const files = Array.from(fileList || []);
+    if (!files.length) return;
+    if (existing + files.length > MAX_ATTACHMENTS_PER_ITEM) {
+      window.alert(`한 항목에는 최대 ${MAX_ATTACHMENTS_PER_ITEM}개까지 첨부할 수 있어요.`);
+      return;
+    }
+    for (const originalFile of files) {
+      if (!ALLOWED_ATTACHMENT_TYPES.has(originalFile.type)) {
+        window.alert(`${originalFile.name}: 이미지 또는 PDF만 첨부할 수 있어요.`);
+        continue;
+      }
+      if (!originalFile.size || originalFile.size > MAX_ATTACHMENT_SIZE) {
+        window.alert(`${originalFile.name}: 파일 크기는 10MB 이하여야 해요.`);
+        continue;
+      }
+      setSync('첨부파일 업로드 중', 'saving');
+      const file = await prepareAttachmentFile(originalFile);
+      const objectPath = `${tripId}/${activeAttachmentTarget.type}/${activeAttachmentTarget.id}/${crypto.randomUUID()}.${extensionForAttachment(file)}`;
+      const { error: uploadError } = await db.storage.from(ATTACHMENT_BUCKET).upload(objectPath, file, { contentType: file.type, upsert: false, cacheControl: '0' });
+      if (uploadError) {
+        setSync('첨부 업로드 실패', 'error');
+        console.error(uploadError);
+        continue;
+      }
+      const originalName = originalFile.name.trim().slice(0, 180) || `첨부파일.${extensionForAttachment(file)}`;
+      const { error: metadataError } = await db.from('expense_attachments').insert({
+        trip_id: tripId,
+        expense_type: activeAttachmentTarget.type,
+        expense_id: activeAttachmentTarget.id,
+        object_path: objectPath,
+        original_name: originalName,
+        mime_type: file.type,
+        size_bytes: file.size
+      });
+      if (metadataError) {
+        await db.storage.from(ATTACHMENT_BUCKET).remove([objectPath]);
+        setSync('첨부 저장 실패', 'error');
+        console.error(metadataError);
+        continue;
+      }
+    }
+    await loadAttachmentMetadata();
+    setSync('첨부 저장됨');
+  }
+
+  window.deleteAttachment = async function (attachmentId) {
+    const row = attachmentRows.find(item => String(item.id) === String(attachmentId));
+    if (!row || !window.confirm(`"${row.original_name}" 파일을 삭제할까?`)) return;
+    setSync('첨부파일 삭제 중', 'saving');
+    const { error: metadataError } = await db.from('expense_attachments').delete().eq('id', row.id).eq('trip_id', tripId);
+    if (metadataError) {
+      setSync('첨부 삭제 실패', 'error');
+      console.error(metadataError);
+      return;
+    }
+    const { error: storageError } = await db.storage.from(ATTACHMENT_BUCKET).remove([row.object_path]);
+    if (storageError) console.error(storageError);
+    await loadAttachmentMetadata();
+    setSync(storageError ? '목록 삭제됨 · 파일 정리 지연' : '첨부 삭제됨', storageError ? 'error' : '');
+  };
+
+  async function cleanupExpenseAttachments(type, expenseId, paths = null) {
+    const objectPaths = paths || rowsForAttachmentTarget(type, expenseId).map(row => row.object_path);
+    if (!objectPaths.length) return;
+    const { error: metadataError } = await db.from('expense_attachments').delete()
+      .eq('trip_id', tripId).eq('expense_type', type).eq('expense_id', expenseId);
+    if (metadataError) throw metadataError;
+    const { error: storageError } = await db.storage.from(ATTACHMENT_BUCKET).remove(objectPaths);
+    if (storageError) console.error(storageError);
+    attachmentRows = attachmentRows.filter(row => !(row.expense_type === type && String(row.expense_id) === String(expenseId)));
+    rebuildAttachmentCounts();
+  }
+
+  async function cleanupAllAttachmentObjects(paths) {
+    if (!paths.length) return;
+    for (let offset = 0; offset < paths.length; offset += 100) {
+      const { error } = await db.storage.from(ATTACHMENT_BUCKET).remove(paths.slice(offset, offset + 100));
+      if (error) console.error(error);
+    }
+  }
+
 
   function mapShared(row) {
     return { id: row.id, name: row.item_name, amount: Number(row.amount), payer: row.payer, sort_order: row.sort_order };
@@ -178,6 +388,9 @@
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'trips', filter: `id=eq.${tripId}`
       }, payload => applyTripMeta(payload.new))
+      .on('postgres_changes', {
+        event: '*', schema: 'public', table: 'expense_attachments', filter: `trip_id=eq.${tripId}`
+      }, scheduleAttachmentReload)
       .subscribe(status => {
         if (status === 'SUBSCRIBED') setSync('실시간 연결됨');
         else if (status === 'CHANNEL_ERROR' || status === 'TIMED_OUT') setSync('재연결 중', 'error');
@@ -246,6 +459,8 @@
   };
 
   delItem = async function (cat, id) {
+    const attachmentPaths = rowsForAttachmentTarget('shared', id).map(row => row.object_path);
+    if (attachmentPaths.length && !window.confirm(`이 항목과 첨부파일 ${attachmentPaths.length}개를 함께 삭제할까?`)) return;
     setSync('삭제 중', 'saving');
     const { error } = await db.from('shared_expenses').delete().eq('id', id).eq('trip_id', tripId);
     if (error) {
@@ -253,6 +468,8 @@
       console.error(error);
       return;
     }
+    try { await cleanupExpenseAttachments('shared', id, attachmentPaths); }
+    catch (cleanupError) { console.error(cleanupError); }
     items[cat] = items[cat].filter(item => String(item.id) !== String(id));
     renderAll();
     setSync('삭제됨');
@@ -313,6 +530,8 @@
   };
 
   delAdvance = async function (id) {
+    const attachmentPaths = rowsForAttachmentTarget('advance', id).map(row => row.object_path);
+    if (attachmentPaths.length && !window.confirm(`이 항목과 첨부파일 ${attachmentPaths.length}개를 함께 삭제할까?`)) return;
     setSync('삭제 중', 'saving');
     const { error } = await db.from('advance_expenses').delete().eq('id', id).eq('trip_id', tripId);
     if (error) {
@@ -320,6 +539,8 @@
       console.error(error);
       return;
     }
+    try { await cleanupExpenseAttachments('advance', id, attachmentPaths); }
+    catch (cleanupError) { console.error(cleanupError); }
     items.advance = items.advance.filter(item => String(item.id) !== String(id));
     renderAll();
     setSync('삭제됨');
@@ -335,9 +556,11 @@
     resetAllButton.disabled = true;
     setSync('전체 삭제 중', 'saving');
     try {
+      const attachmentPaths = attachmentRows.map(row => row.object_path);
       const { error } = await db.rpc('reset_trip_data');
       if (error) throw error;
-      await Promise.all([loadTripMeta(), loadData()]);
+      await cleanupAllAttachmentObjects(attachmentPaths);
+      await Promise.all([loadTripMeta(), loadData(), loadAttachmentMetadata()]);
       setSync('전체 삭제 완료');
     } catch (error) {
       setSync('전체 삭제 실패', 'error');
@@ -367,7 +590,14 @@
       tripId = config.tripId;
       setupTitleEditing();
       resetAllButton.addEventListener('click', resetAllData);
-      await Promise.all([loadTripMeta(), loadData()]);
+      attachmentClose.addEventListener('click', () => attachmentModal.close());
+      attachmentModal.addEventListener('click', event => { if (event.target === attachmentModal) attachmentModal.close(); });
+      attachmentModal.addEventListener('close', () => { activeAttachmentTarget = null; attachmentInput.value = ''; });
+      attachmentInput.addEventListener('change', async () => {
+        try { await uploadAttachment(attachmentInput.files); }
+        finally { attachmentInput.value = ''; }
+      });
+      await Promise.all([loadTripMeta(), loadData(), loadAttachmentMetadata()]);
       subscribeRealtime();
       hideConnection();
       setSync('실시간 연결됨');

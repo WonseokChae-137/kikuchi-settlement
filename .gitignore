@@ -1,0 +1,11 @@
+# Local/private setup files
+*.private.*
+.env
+.env.*
+access_key.local.txt
+
+# Development artifacts
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

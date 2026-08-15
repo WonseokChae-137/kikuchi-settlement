@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>키쿠치 여름방학 정산</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Jua&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --forest:#245c3a;
+  --forest-dark:#173f29;
+  --leaf:#76b947;
+  --lime:#cde99d;
+  --mint:#dff4d4;
+  --cream:#fbfff7;
+  --paper:#f5faef;
+  --line:#c9dfbb;
+  --ink:#173323;
+  --muted:#6f856f;
+  --danger:#b34a42;
+  --shadow:0 18px 45px rgba(31,85,51,.10);
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  min-height:100vh;
+  padding:24px 18px 64px;
+  font-family:'Gowun Dodum','Malgun Gothic',sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(circle at 8% 4%,rgba(205,233,157,.72),transparent 29%),
+    radial-gradient(circle at 94% 18%,rgba(186,226,166,.62),transparent 27%),
+    var(--paper);
+}
+.page-header{
+  position:relative;
+  max-width:1200px;
+  margin:0 auto 34px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+  isolation:isolate;
+}
+.page-title{
+  position:absolute;
+  z-index:3;
+  left:50%;
+  top:50%;
+  width:min(440px,44%);
+  transform:translate(-50%,-50%) rotate(-1.2deg);
+  padding:23px 28px 19px;
+  border:3px solid rgba(255,255,255,.92);
+  border-radius:28px 12px 28px 12px;
+  background:rgba(250,255,244,.94);
+  box-shadow:0 14px 35px rgba(23,63,41,.24);
+  color:var(--forest-dark);
+  font-family:'Jua','Malgun Gothic',sans-serif;
+  font-size:clamp(32px,4.1vw,58px);
+  font-weight:400;
+  line-height:1.08;
+  letter-spacing:-.025em;
+  text-align:center;
+  text-wrap:balance;
+}
+.header-photo{
+  position:relative;
+  display:flex;
+  width:100%;
+  height:clamp(330px,36vw,440px);
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border:3px dashed rgba(66,128,73,.46);
+  border-radius:42px 18px 42px 18px;
+  background:linear-gradient(145deg,#e7f6d4,#c9e7b2);
+  color:var(--forest);
+  cursor:pointer;
+  box-shadow:var(--shadow);
+  transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;
+}
+.header-photo:nth-of-type(2){border-radius:18px 42px 18px 42px;}
+.header-photo:hover{transform:translateY(-4px);border-color:var(--leaf);box-shadow:0 24px 48px rgba(31,85,51,.16);}
+.header-photo:focus-within{outline:4px solid rgba(118,185,71,.34);outline-offset:4px;}
+.header-photo img{width:100%;height:100%;object-fit:cover;display:none;transition:transform .35s ease;}
+.header-photo:hover img{transform:scale(1.025);}
+.header-photo.has-image img{display:block;}
+.header-photo.has-image .photo-placeholder{display:none;}
+.photo-placeholder{display:flex;flex-direction:column;align-items:center;gap:12px;font-family:'Jua',sans-serif;font-size:18px;line-height:1.2;}
+.photo-placeholder i{font-size:52px;}
+.photo-input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;}
+.access-screen{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:22px;background:rgba(23,63,41,.72);backdrop-filter:blur(8px);}
+.access-screen.is-hidden{display:none;}
+.access-card{width:min(440px,100%);padding:30px;border:1px solid #d7e9ca;border-radius:28px 12px 28px 12px;background:var(--cream);box-shadow:0 24px 70px rgba(10,44,25,.28);text-align:center;}
+.access-card h2{font-family:'Jua',sans-serif;font-size:28px;font-weight:400;color:var(--forest-dark);}
+.access-card p{margin:10px 0 18px;color:var(--muted);font-size:14px;line-height:1.55;}
+.access-form{display:flex;gap:8px;}
+.access-form input{min-width:0;}
+.access-form button{flex:0 0 auto;padding:0 17px;border:0;border-radius:13px;background:var(--forest);color:#fff;font-family:inherit;font-weight:700;cursor:pointer;}
+.access-error{min-height:21px;margin-top:12px;color:var(--danger);font-size:13px;}
+.sync-state{position:fixed;z-index:20;right:14px;bottom:14px;display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #cde1c0;border-radius:999px;background:rgba(251,255,247,.94);box-shadow:0 8px 24px rgba(31,85,51,.13);color:var(--forest);font-size:12px;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#7ab34f;}
+.sync-state.saving .sync-dot{background:#e2a53b;}
+.sync-state.error{color:var(--danger);}.sync-state.error .sync-dot{background:var(--danger);}
+#cats,#proxy-payments,.result-block{max-width:1100px;margin-left:auto;margin-right:auto;}
+.cat-block{
+  position:relative;
+  margin-bottom:20px;
+  overflow:hidden;
+  border:1px solid var(--line);
+  border-radius:24px 10px 24px 10px;
+  background:rgba(251,255,247,.96);
+  box-shadow:0 9px 28px rgba(47,96,57,.07);
+}
+.cat-header{display:flex;align-items:center;gap:10px;padding:18px 22px 15px;border-bottom:1px solid #dcebd2;background:linear-gradient(90deg,#eff9e4,#fbfff7);}
+.cat-header>i{display:grid;width:34px;height:34px;place-items:center;border-radius:50%;background:var(--forest);color:#fff!important;}
+.cat-title{font-family:'Jua',sans-serif;font-size:20px;font-weight:400;color:var(--forest-dark);}
+.cat-note{font-size:12px;color:var(--muted);margin-left:2px;}
+.cat-total{margin-left:auto;font-family:'Jua',sans-serif;font-size:18px;font-weight:400;color:var(--forest);}
+.cat-body{padding:15px 22px 20px;}
+.ihead,.irow{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 40px;gap:10px;align-items:center;}
+.ihead{padding:0 4px 7px;border-bottom:1px solid #e2edda;margin-bottom:3px;}
+.ihead span{font-size:12px;color:var(--muted);}
+.irow{padding:7px 0;border-bottom:1px solid #edf3e8;}
+.irow:last-child{border-bottom:none;}
+.iname{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.iamt{font-size:13px;text-align:right;}
+.ipill{font-size:11px;padding:2px 7px;border-radius:99px;text-align:center;white-space:nowrap;}
+.p-c,.p-s,.p-b{background:var(--mint);color:var(--forest-dark);}
+input,select{
+  width:100%;
+  height:43px;
+  padding:0 12px;
+  border:1px solid #cfe0c5;
+  border-radius:13px 7px 13px 7px;
+  background:#fff;
+  color:var(--ink);
+  font:14px 'Gowun Dodum','Malgun Gothic',sans-serif;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+input:hover,select:hover{border-color:#9fc389;}
+input:focus,select:focus{outline:none;border-color:var(--leaf);background:#fcfff9;box-shadow:0 0 0 4px rgba(118,185,71,.14);}
+.edit-name{min-width:0;}
+.edit-amount{text-align:right;font-variant-numeric:tabular-nums;}
+.edit-payer{padding-left:10px;padding-right:6px;}
+.delbtn{width:40px;height:40px;border:0;border-radius:13px;background:#f1f7ec;color:#7d987d;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:.15s ease;}
+.delbtn:hover{background:#fdebe7;color:var(--danger);transform:rotate(4deg);}
+.add-item-btn{width:100%;min-height:48px;margin-top:14px;border:1px dashed #8ebd70;border-radius:15px 8px 15px 8px;background:#eff9e4;color:var(--forest);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;font:18px 'Jua',sans-serif;transition:.17s ease;}
+.add-item-btn:hover{background:var(--lime);border-color:var(--forest);transform:translateY(-1px);}
+.add-item-btn:focus-visible{outline:4px solid rgba(118,185,71,.25);outline-offset:2px;}
+.empty-hint{font-size:13px;color:var(--muted);padding:10px 2px;}
+.result-block{overflow:hidden;margin-bottom:24px;border:1px solid #aacd93;border-radius:26px 12px 26px 12px;background:var(--cream);box-shadow:var(--shadow);}
+.result-header{padding:19px 23px 16px;border-bottom:1px solid #d5e8c8;background:var(--forest);color:#fff;display:flex;align-items:center;gap:9px;font:22px 'Jua',sans-serif;}
+.result-body{padding:22px;}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
+.scard{padding:17px 12px;border:1px solid #d5e7c9;border-radius:18px 8px 18px 8px;background:#eef8e5;text-align:center;}
+.sval{font-family:'Jua',sans-serif;font-size:22px;font-weight:400;color:var(--forest-dark);}
+.slbl{font-size:12px;color:var(--muted);margin-top:3px;}
+.cat-summary{margin-bottom:18px;}
+.cat-row{display:flex;justify-content:space-between;align-items:center;padding:9px 4px;border-bottom:1px solid #e1edda;font-size:14px;}
+.cat-row:last-child{border-bottom:none;}
+.proxy-block{border-color:#99c69a;background:#f8fff4;}
+.proxy-block .cat-header{background:linear-gradient(90deg,#dff3d3,#f8fff4);}
+.proxy-head,.proxy-row{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,.75fr) minmax(120px,.9fr) minmax(120px,.9fr) 40px;gap:10px;align-items:center;}
+.proxy-head{padding:0 4px 7px;border-bottom:1px solid #dcebd2;margin-bottom:3px;}
+.proxy-head span{font-size:12px;color:var(--muted);}
+.proxy-row{padding:7px 0;border-bottom:1px solid #e7f0df;}
+.proxy-row:last-child{border-bottom:none;}
+.proxy-paid,.proxy-owner{padding-left:10px;padding-right:6px;}
+.settlement-breakdown{margin:4px 0 18px;padding:13px 15px;border:1px solid #d6e8cb;border-radius:15px 7px 15px 7px;background:#f7fcf3;}
+.settlement-line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #e2edda;font-size:13px;}
+.settlement-line:last-child{border-bottom:none;}
+.settlement-line strong{color:var(--forest-dark);font-weight:700;text-align:right;}
+.verdict{padding:22px;border:2px solid #bad99f;border-radius:20px 8px 20px 8px;background:linear-gradient(135deg,#eff9e4,#dff2cd);text-align:center;margin-bottom:12px;}
+.vbig{font-family:'Jua',sans-serif;font-size:30px;font-weight:400;color:var(--forest-dark);margin:8px 0;}
+.vsub{font-size:13px;color:var(--muted);}
+@media(max-width:700px){
+  body{padding:10px 8px 42px;}
+  .page-header{gap:8px;margin-bottom:18px;}
+  .header-photo{height:240px;border-width:2px;border-radius:24px 10px 24px 10px;}
+  .header-photo:nth-of-type(2){border-radius:10px 24px 10px 24px;}
+  .page-title{width:min(78%,330px);padding:15px 15px 12px;border-width:2px;border-radius:20px 8px 20px 8px;font-size:clamp(27px,8.5vw,40px);}
+  .photo-placeholder{gap:7px;font-size:14px;}
+  .photo-placeholder i{font-size:36px;}
+  .cat-block{border-radius:18px 8px 18px 8px;margin-bottom:13px;}
+  .cat-header{padding:14px 12px 12px;gap:7px;}
+  .cat-header>i{width:30px;height:30px;}
+  .cat-title{font-size:18px;}
+  .cat-note{display:none;}
+  .cat-total{font-size:16px;}
+  .cat-body{padding:10px 10px 14px;overflow:visible;}
+  .ihead{display:none;}
+  .irow{
+    grid-template-columns:minmax(0,1fr) 112px 40px;
+    grid-template-areas:
+      "name name del"
+      "amount payer del";
+    gap:6px;
+    min-width:0;
+    padding:10px 0;
+  }
+  .edit-name{grid-area:name;}
+  .edit-amount{grid-area:amount;}
+  .edit-payer{grid-area:payer;}
+  .delbtn{grid-area:del;width:40px;height:100%;min-height:44px;}
+  .proxy-head{display:none;}
+  .proxy-row{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) 96px 96px 40px;
+    grid-template-areas:
+      "proxyname proxyname proxyname proxydel"
+      "proxyamount proxypaid proxyowner proxydel";
+    gap:6px;
+    min-width:0;
+    padding:10px 0;
+  }
+  .proxy-row .edit-name{grid-area:proxyname;}
+  .proxy-row .edit-amount{grid-area:proxyamount;}
+  .proxy-paid{grid-area:proxypaid;}
+  .proxy-owner{grid-area:proxyowner;}
+  .proxy-row .delbtn{grid-area:proxydel;}
+  input,select{height:42px;padding:0 8px;font-size:13px;}
+  .add-item-btn{min-width:0;}
+  .result-block{border-radius:20px 8px 20px 8px;}
+  .result-header{font-size:20px;padding:16px;}
+  .result-body{padding:14px 12px;}
+  .stat-grid{grid-template-columns:1fr 1fr;gap:8px;}
+  .settlement-line{align-items:flex-start;flex-direction:column;gap:3px;}
+  .settlement-line strong{text-align:left;}
+  .scard{padding:13px;}
+  .sval{font-size:20px;}
+  .vbig{font-size:25px;}
+}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;}}
+</style>
+</head>
+<body>
+<div class="access-screen" id="access-screen">
+  <div class="access-card">
+    <h2>정산표 연결 중</h2>
+    <p id="access-message">안전한 공동 정산표에 연결하고 있어요.</p>
+    <form class="access-form" id="access-form" hidden>
+      <input id="access-key-input" type="password" autocomplete="off" placeholder="비밀 접근키" aria-label="비밀 접근키"/>
+      <button type="submit">열기</button>
+    </form>
+    <div class="access-error" id="access-error"></div>
+  </div>
+</div>
+<div class="sync-state" id="sync-state"><span class="sync-dot"></span><span id="sync-text">연결 중</span></div>
+<header class="page-header">
+  <label class="header-photo" id="header-photo-left" for="header-input-left" title="왼쪽 사진 선택">
+    <img id="header-image-left" alt="왼쪽 헤더 사진"/>
+    <span class="photo-placeholder"><i class="ti ti-photo-plus"></i><span>사진 선택</span></span>
+    <input class="photo-input" id="header-input-left" type="file" accept="image/*"/>
+  </label>
+  <h1 class="page-title">키쿠치 여름방학 정산</h1>
+  <label class="header-photo" id="header-photo-right" for="header-input-right" title="오른쪽 사진 선택">
+    <img id="header-image-right" alt="오른쪽 헤더 사진"/>
+    <span class="photo-placeholder"><i class="ti ti-photo-plus"></i><span>사진 선택</span></span>
+    <input class="photo-input" id="header-input-right" type="file" accept="image/*"/>
+  </label>
+</header>
+<div class="result-block">
+  <div class="result-header"><i class="ti ti-calculator"></i> 정산 결과</div>
+  <div class="result-body" id="result-body"></div>
+</div>
+<div id="cats"></div>
+<div id="proxy-payments"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const HEADER_PHOTOS={
+  left:'kikuchi-settlement-header-left',
+  right:'kikuchi-settlement-header-right'
+};
+
+function resizeHeaderPhoto(file){
+  return new Promise((resolve,reject)=>{
+    if(!file||!file.type.startsWith('image/')){
+      reject(new Error('이미지 파일을 선택해 주세요.'));
+      return;
+    }
+    const image=new Image();
+    const objectUrl=URL.createObjectURL(file);
+    image.onload=()=>{
+      const maxSize=720;
+      const scale=Math.min(1,maxSize/Math.max(image.naturalWidth,image.naturalHeight));
+      const canvas=document.createElement('canvas');
+      canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));
+      canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+      const context=canvas.getContext('2d');
+      context.drawImage(image,0,0,canvas.width,canvas.height);
+      URL.revokeObjectURL(objectUrl);
+      resolve(canvas.toDataURL('image/webp',0.86));
+    };
+    image.onerror=()=>{
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error('사진을 열 수 없어요. 다른 이미지로 다시 시도해 주세요.'));
+    };
+    image.src=objectUrl;
+  });
+}
+
+function showHeaderPhoto(side,dataUrl){
+  const box=document.getElementById(`header-photo-${side}`);
+  const image=document.getElementById(`header-image-${side}`);
+  if(!box||!image||!dataUrl)return;
+  image.src=dataUrl;
+  box.classList.add('has-image');
+}
+
+function setupHeaderPhoto(side){
+  const input=document.getElementById(`header-input-${side}`);
+  const saved=localStorage.getItem(HEADER_PHOTOS[side]);
+  if(saved)showHeaderPhoto(side,saved);
+  input.addEventListener('change',async()=>{
+    const file=input.files&&input.files[0];
+    if(!file)return;
+    try{
+      const dataUrl=await resizeHeaderPhoto(file);
+      localStorage.setItem(HEADER_PHOTOS[side],dataUrl);
+      showHeaderPhoto(side,dataUrl);
+    }catch(error){
+      alert(error.message||'사진을 저장하지 못했어요.');
+    }finally{
+      input.value='';
+    }
+  });
+}
+
+setupHeaderPhoto('left');
+setupHeaderPhoto('right');
+
+const CATS=[
+  {key:'hotel',    label:'호텔',    icon:'ti-building', note:'숙박비 전체'},
+  {key:'flight',   label:'항공권',  icon:'ti-plane',    note:'항공 관련'},
+  {key:'transport',label:'이동수단',icon:'ti-train',    note:'기차, 버스, 택시 등'},
+  {key:'local',    label:'현지결제',icon:'ti-wallet',   note:'식비, 관광, 쇼핑 등'},
+];
+const PI={'카피바라':'🦫','수달':'🦦'};
+const PC={'카피바라':'p-c','수달':'p-s'};
+
+let items={hotel:[],flight:[],transport:[],local:[],advance:[]};
+function saveItems(){}
+let uid=201;
+
+function escapeAttr(value){
+  return String(value??'')
+    .replaceAll('&','&amp;')
+    .replaceAll('"','&quot;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;');
+}
+
+function payerOptions(selected){
+  return ['카피바라','수달'].map(payer=>
+    `<option value="${payer}" ${payer===selected?'selected':''}>${PI[payer]} ${payer}</option>`
+  ).join('');
+}
+
+function personOptions(selected){
+  return ['카피바라','수달'].map(person=>
+    `<option value="${person}" ${person===selected?'selected':''}>${PI[person]} ${person}</option>`
+  ).join('');
+}
+
+function otherPerson(person){return person==='카피바라'?'수달':'카피바라';}
+
+function updateCatTotal(cat){
+  const total=items[cat].reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  const el=document.getElementById(`cat-total-${cat}`);
+  if(el)el.textContent=total>0?`${Math.round(total).toLocaleString()}원`:'';
+}
+
+function updateItem(cat,id,field,value){
+  const item=items[cat].find(entry=>entry.id===id);
+  if(!item)return;
+  if(field==='amount')item.amount=Math.max(0,Number(value)||0);
+  else if(field==='payer'&&PI[value])item.payer=value;
+  else if(field==='name')item.name=value;
+  saveItems();
+  updateCatTotal(cat);
+  renderResult();
+}
+
+function addBlankItem(cat){
+  const id=uid++;
+  items[cat].push({id,name:'',amount:0,payer:'카피바라'});
+  saveItems();
+  renderAll();
+  const input=document.querySelector(`[data-item-id="${id}"]`);
+  if(input)input.focus();
+}
+
+function delItem(cat,id){
+  items[cat]=items[cat].filter(item=>item.id!==id);
+  saveItems();
+  renderAll();
+}
+
+function updateAdvance(id,field,value){
+  const item=items.advance.find(entry=>entry.id===id);
+  if(!item)return;
+  let needsRerender=false;
+  if(field==='amount')item.amount=Math.max(0,Number(value)||0);
+  else if(field==='name')item.name=value;
+  else if(field==='payer'&&(value==='카피바라'||value==='수달')){
+    item.payer=value;
+    if(item.owner===value)item.owner=otherPerson(value);
+    needsRerender=true;
+  }else if(field==='owner'&&(value==='카피바라'||value==='수달')){
+    item.owner=value;
+    if(item.payer===value)item.payer=otherPerson(value);
+    needsRerender=true;
+  }
+  saveItems();
+  if(needsRerender)renderAdvance();
+  else updateAdvanceTotal();
+  renderResult();
+}
+
+function updateAdvanceTotal(){
+  const total=items.advance.reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  const el=document.getElementById('advance-total');
+  if(el)el.textContent=total>0?`${Math.round(total).toLocaleString()}원`:'';
+}
+
+function addBlankAdvance(){
+  const id=uid++;
+  items.advance.push({id,name:'',amount:0,payer:'수달',owner:'카피바라'});
+  saveItems();
+  renderAll();
+  const input=document.querySelector(`[data-advance-id="${id}"]`);
+  if(input)input.focus();
+}
+
+function delAdvance(id){
+  items.advance=items.advance.filter(item=>item.id!==id);
+  saveItems();
+  renderAll();
+}
+
+function renderAdvance(){
+  const list=items.advance;
+  const total=list.reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  const rows=list.map(item=>`<div class="proxy-row">
+    <input class="edit-name" data-advance-id="${item.id}" type="text" value="${escapeAttr(item.name)}" aria-label="대신 결제 항목명" placeholder="항공권, 마트 결제 등" oninput="updateAdvance('${item.id}','name',this.value)"/>
+    <input class="edit-amount" type="number" value="${Number(item.amount)||''}" aria-label="대신 결제 금액" placeholder="금액" min="0" step="1" inputmode="numeric" oninput="updateAdvance('${item.id}','amount',this.value)"/>
+    <select class="proxy-paid" aria-label="대신 결제한 사람" onchange="updateAdvance('${item.id}','payer',this.value)">${personOptions(item.payer)}</select>
+    <select class="proxy-owner" aria-label="실제 부담자" onchange="updateAdvance('${item.id}','owner',this.value)">${personOptions(item.owner)}</select>
+    <button class="delbtn" type="button" aria-label="${escapeAttr(item.name||'빈 대신 결제 항목')} 삭제" onclick="delAdvance('${item.id}')"><i class="ti ti-x"></i></button>
+  </div>`).join('');
+  document.getElementById('proxy-payments').innerHTML=`<div class="cat-block proxy-block">
+    <div class="cat-header">
+      <i class="ti ti-receipt-refund" style="font-size:16px"></i>
+      <span class="cat-title">대신 결제</span>
+      <span class="cat-note">상대방 몫을 전액 대신 낸 내역</span>
+      <span class="cat-total" id="advance-total">${total>0?Math.round(total).toLocaleString()+'원':''}</span>
+    </div>
+    <div class="cat-body">
+      ${list.length?`<div class="proxy-head"><span>항목</span><span style="text-align:right">금액</span><span style="text-align:center">결제한 사람</span><span style="text-align:center">실제 부담자</span><span></span></div>${rows}`:'<div class="empty-hint">대신 결제한 내역이 아직 없어요</div>'}
+      <button class="add-item-btn" type="button" onclick="addBlankAdvance()"><i class="ti ti-plus"></i> 대신 결제 추가</button>
+    </div>
+  </div>`;
+}
+
+function renderCats(){
+  document.getElementById('cats').innerHTML=CATS.map(c=>{
+    const list=items[c.key];
+    const sum=list.reduce((s,i)=>s+i.amount,0);
+    const rows=list.map(it=>`<div class="irow">
+      <input class="edit-name" data-item-id="${it.id}" type="text" value="${escapeAttr(it.name)}" aria-label="${c.label} 항목명" placeholder="항목명" oninput="updateItem('${c.key}','${it.id}','name',this.value)"/>
+      <input class="edit-amount" type="number" value="${Number(it.amount)||''}" aria-label="${c.label} 금액" placeholder="금액" min="0" step="1" inputmode="numeric" oninput="updateItem('${c.key}','${it.id}','amount',this.value)"/>
+      <select class="edit-payer" aria-label="${c.label} 결제자" onchange="updateItem('${c.key}','${it.id}','payer',this.value)">${payerOptions(it.payer)}</select>
+      <button class="delbtn" type="button" aria-label="${escapeAttr(it.name||'빈 항목')} 삭제" onclick="delItem('${c.key}','${it.id}')"><i class="ti ti-x"></i></button>
+    </div>`).join('');
+    return`<div class="cat-block">
+      <div class="cat-header">
+        <i class="ti ${c.icon}" style="font-size:16px;color:#888"></i>
+        <span class="cat-title">${c.label}</span>
+        <span class="cat-note">${c.note}</span>
+        <span class="cat-total" id="cat-total-${c.key}">${sum>0?Math.round(sum).toLocaleString()+'원':''}</span>
+      </div>
+      <div class="cat-body">
+        ${list.length?`<div class="ihead"><span>항목</span><span style="text-align:right">금액</span><span style="text-align:center">결제자</span><span></span></div>${rows}`:'<div class="empty-hint">아직 입력된 항목이 없어요</div>'}
+        <button class="add-item-btn" type="button" onclick="addBlankItem('${c.key}')"><i class="ti ti-plus"></i> 항목 추가</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderResult(){
+  const el=document.getElementById('result-body');
+  const shared=CATS.flatMap(cat=>items[cat.key]);
+  const advance=items.advance;
+  if(!shared.length&&!advance.length){
+    el.innerHTML='<div style="text-align:center;padding:1.5rem;color:var(--muted);font-size:13px">아래에 지출을 입력하면 자동으로 계산돼요</div>';
+    return;
+  }
+
+  let cap=0,sud=0;
+  shared.forEach(item=>{
+    const amount=Number(item.amount)||0;
+    if(item.payer==='카피바라')cap+=amount;
+    else if(item.payer==='수달')sud+=amount;
+  });
+  const sharedTotal=cap+sud;
+  const sharedCapBalance=cap-(sharedTotal/2);
+
+  const capPaidForSud=advance
+    .filter(item=>item.payer==='카피바라'&&item.owner==='수달')
+    .reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  const sudPaidForCap=advance
+    .filter(item=>item.payer==='수달'&&item.owner==='카피바라')
+    .reduce((sum,item)=>sum+(Number(item.amount)||0),0);
+  const advanceTotal=capPaidForSud+sudPaidForCap;
+
+  // 양수면 수달이 카피바라에게, 음수면 카피바라가 수달에게 보낸다.
+  const finalCapBalance=sharedCapBalance+capPaidForSud-sudPaidForCap;
+  const finalAmount=Math.abs(Math.round(finalCapBalance));
+  const sharedAmount=Math.abs(Math.round(sharedCapBalance));
+
+  const catRows=CATS.map(cat=>{
+    const sum=items[cat.key].reduce((total,item)=>total+(Number(item.amount)||0),0);
+    if(!sum)return'';
+    return`<div class="cat-row"><span style="color:var(--muted);display:flex;align-items:center;gap:6px"><i class="ti ${cat.icon}" style="font-size:13px"></i>${cat.label}</span><span style="font-weight:700">${Math.round(sum).toLocaleString()}원</span></div>`;
+  }).join('');
+
+  let sharedLine='<span>반반 공동경비 차액</span><strong>차액 없음</strong>';
+  if(sharedAmount>0&&sharedCapBalance>0)sharedLine=`<span>반반 공동경비 차액</span><strong>수달 → 카피바라 ${sharedAmount.toLocaleString()}원</strong>`;
+  else if(sharedAmount>0)sharedLine=`<span>반반 공동경비 차액</span><strong>카피바라 → 수달 ${sharedAmount.toLocaleString()}원</strong>`;
+
+  const advanceLines=[];
+  if(sudPaidForCap>0)advanceLines.push(`<div class="settlement-line"><span>수달이 카피바라 대신 결제</span><strong>카피바라 → 수달 ${Math.round(sudPaidForCap).toLocaleString()}원</strong></div>`);
+  if(capPaidForSud>0)advanceLines.push(`<div class="settlement-line"><span>카피바라가 수달 대신 결제</span><strong>수달 → 카피바라 ${Math.round(capPaidForSud).toLocaleString()}원</strong></div>`);
+  if(!advanceLines.length)advanceLines.push('<div class="settlement-line"><span>대신 결제</span><strong>내역 없음</strong></div>');
+
+  let verdict;
+  if(finalAmount<1){
+    verdict='<div class="verdict" id="final-verdict" data-from="" data-to="" data-amount="0"><div style="font-family:Jua,sans-serif;font-size:20px">최종 정산 완료</div><div class="vsub" style="margin-top:5px">반반 정산과 대신 결제를 모두 합치면 주고받을 금액이 없어요</div></div>';
+  }else if(finalCapBalance>0){
+    verdict=`<div class="verdict" id="final-verdict" data-from="수달" data-to="카피바라" data-amount="${finalAmount}"><div class="vsub">반반 정산과 대신 결제를 합친 최종 금액</div><div class="vbig">수달 → 카피바라&nbsp; ${finalAmount.toLocaleString()}원</div><div class="vsub">수달이 카피바라에게 송금</div></div>`;
+  }else{
+    verdict=`<div class="verdict" id="final-verdict" data-from="카피바라" data-to="수달" data-amount="${finalAmount}"><div class="vsub">반반 정산과 대신 결제를 합친 최종 금액</div><div class="vbig">카피바라 → 수달&nbsp; ${finalAmount.toLocaleString()}원</div><div class="vsub">카피바라가 수달에게 송금</div></div>`;
+  }
+
+  el.innerHTML=`
+    <div class="stat-grid">
+      <div class="scard"><div class="sval">${Math.round(sharedTotal).toLocaleString()}원</div><div class="slbl">반반 공동경비</div></div>
+      <div class="scard"><div class="sval">${Math.round(cap).toLocaleString()}원</div><div class="slbl">카피바라 공동결제</div></div>
+      <div class="scard"><div class="sval">${Math.round(sud).toLocaleString()}원</div><div class="slbl">수달 공동결제</div></div>
+      <div class="scard"><div class="sval">${Math.round(advanceTotal).toLocaleString()}원</div><div class="slbl">대신 결제 합계</div></div>
+    </div>
+    <div class="cat-summary">${catRows}${advanceTotal>0?`<div class="cat-row"><span style="color:var(--muted);display:flex;align-items:center;gap:6px"><i class="ti ti-receipt-refund" style="font-size:13px"></i>대신 결제</span><span style="font-weight:700">${Math.round(advanceTotal).toLocaleString()}원</span></div>`:''}</div>
+    <div class="settlement-breakdown">
+      <div class="settlement-line">${sharedLine}</div>
+      ${advanceLines.join('')}
+    </div>
+    ${verdict}
+  `;
+}
+
+function renderAll(){renderCats();renderAdvance();renderResult();}
+renderAll();
+</script>
+<script src="app.js"></script>
+</body>
+</html>

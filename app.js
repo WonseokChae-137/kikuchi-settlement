@@ -199,7 +199,7 @@
     }
     attachmentList.innerHTML = '<div class="attachment-empty">첨부파일을 불러오는 중이에요</div>';
     const cards = await Promise.all(rows.map(async row => {
-      const { data, error } = await db.storage.from(ATTACHMENT_BUCKET).createSignedUrl(row.object_path, 600);
+      const { data, error } = await db.storage.from(ATTACHMENT_BUCKET).createSignedUrl(row.object_path, 60);
       const signedUrl = error ? '' : data.signedUrl;
       const isImage = row.mime_type.startsWith('image/');
       const preview = signedUrl && isImage

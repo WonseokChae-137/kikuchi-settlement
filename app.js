@@ -58,8 +58,16 @@
 
   async function ensureAnonymousSession() {
     const { data: sessionData, error: sessionError } = await db.auth.getSession();
-    if (sessionError) throw sessionError;
-    if (sessionData.session) return sessionData.session;
+    if (!sessionError && sessionData.session) {
+      const { data: userData, error: userError } = await db.auth.getUser();
+      if (!userError && userData.user) return sessionData.session;
+    }
+
+    if (sessionError || sessionData.session) {
+      const { error: signOutError } = await db.auth.signOut({ scope: 'local' });
+      if (signOutError) console.warn('Failed to clear stale anonymous session', signOutError);
+    }
+
     const { data, error } = await db.auth.signInAnonymously();
     if (error) throw error;
     return data.session;
